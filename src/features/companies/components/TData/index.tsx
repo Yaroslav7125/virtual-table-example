@@ -19,8 +19,6 @@ export const TData: FC<TDataProps> = ({ onChange, value, className }) => {
       onClick={() => {
         setTimeout(() => ref?.current?.focus(), 0);
         setIsEdit(true);
-
-        console.log("asdasd");
       }}
       className={cn(styles.root, className)}
     >
@@ -31,11 +29,9 @@ export const TData: FC<TDataProps> = ({ onChange, value, className }) => {
           onChange={e => setInnerValue(e.target.value)}
           ref={ref}
           onBlur={() => {
-            setIsEdit(false);
             onChange(innerValue);
-            console.log("input blur");
+            setIsEdit(false);
           }}
-          onFocus={() => console.log("input focus")}
         />
       ) : (
         <div>{value}</div>

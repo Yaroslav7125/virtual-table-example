@@ -1,181 +1,127 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import {
-  addCompanies,
   checkedCompanies,
   checkedCompany,
+  changeField,
+  bulkRemove,
 } from "./companiesSlice";
-import type { Company } from "./companiesSlice";
-import { companiesMockData } from "./mockData";
 import styles from "./Companies.module.css";
 import { TData } from "./components/TData";
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
-} from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import cn from "classnames";
+import { AddCompany } from "./components/AddCompany";
 
 export const CompaniesList = () => {
   const dispatch = useAppDispatch();
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const { companiesById, companiesIds } = useAppSelector(
     state => state.companies,
   );
 
-  const columns = useMemo<Array<ColumnDef<Company>>>(
-    () => [
-      {
-        accessorKey: "checked",
-        header: () => (
-          <input
-            type="checkbox"
-            onChange={e =>
-              dispatch(
-                checkedCompanies({
-                  ids: companiesIds,
-                  newValue: e.target.checked,
-                }),
-              )
-            }
-          />
-        ),
-        cell: info => {
-          //   console.log(a);
-
-          return (
-            <input
-              type="checkbox"
-              checked={info.getValue<Company["checked"]>()}
-              onChange={e => {
-                // console.log(e.target.checked);
-                // dispatch(
-                //   checkedCompany({
-                //     id: info.getValue<Company["checked"]>(),
-                //     newValue: e.target.checked,
-                //   }),
-                // );
-              }}
-            />
-          );
-        },
-        size: 30,
-      },
-      {
-        accessorKey: "name",
-        cell: info => info.getValue(),
-      },
-      {
-        accessorFn: row => row.address,
-        id: "address",
-        cell: info => info.getValue(),
-        header: () => <span>Address</span>,
-      },
-    ],
-    [],
-  );
-
-  const data = useMemo(() => {
-    return companiesIds.map(elm => companiesById[elm]);
-  }, [companiesIds, companiesById]);
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    debugTable: true,
-  });
-
-  const { rows } = table.getRowModel();
-
-  const parentRef = useRef<HTMLDivElement>(null);
-
   const virtualizer = useVirtualizer({
-    count: rows.length,
+    count: companiesIds.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 60,
     overscan: 35,
   });
 
-  //   const handleChangeContent = ({
-  //     id,
-  //     field,
-  //     newValue,
-  //   }: {
-  //     id: string;
-  //     field: string;
-  //     newValue: string;
-  //   }) => {
-  //     console.log(id, field, newValue);
-  //   };
-
-  //   useEffect(() => {
-  //     dispatch(addCompanies(companiesMockData));
-  //   }, []);
-
-  useEffect(() => {
-    console.log({ companiesById });
-  }, [companiesById]);
-
-  const handleScroll = e => {
-    console.log(e);
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
-    console.log(scrollTop, scrollHeight, clientHeight);
+  const handleChangeContent = ({
+    id,
+    field,
+    newValue,
+  }: {
+    id: string;
+    field: "name" | "address";
+    newValue: string;
+  }) => {
+    dispatch(changeField({ id, field, newValue }));
   };
 
   return (
-    <div ref={parentRef} style={{ height: "600px", overflow: "auto" }}>
-      <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
-        <table>
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => {
-                  return (
-                    <th
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      style={{ width: header.getSize() }}
-                    >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
-                    </th>
-                  );
-                })}
+    <div>
+      <AddCompany></AddCompany>
+      <header>
+        <button onClick={() => dispatch(bulkRemove())}>Удалить</button>
+      </header>
+      <div ref={parentRef} style={{ height: "600px", overflow: "auto" }}>
+        <div style={{ height: `${virtualizer.getTotalSize()}px` }}>
+          <table className={styles.tableRoot}>
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    onChange={e =>
+                      dispatch(
+                        checkedCompanies({
+                          ids: companiesIds,
+                          newValue: e.target.checked,
+                        }),
+                      )
+                    }
+                  />
+                </th>
+                <th className={styles.theaderName}>Name</th>
+                <th>Address</th>
               </tr>
-            ))}
-          </thead>
-          <tbody>
-            {virtualizer.getVirtualItems().map((virtualRow, index) => {
-              const row = rows[virtualRow.index];
-              return (
-                <tr
-                  key={row.id}
-                  style={{
-                    height: `${virtualRow.size}px`,
-                    transform: `translateY(${
-                      virtualRow.start - index * virtualRow.size
-                    }px)`,
-                  }}
-                >
-                  {row.getVisibleCells().map(cell => {
-                    return (
-                      <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {virtualizer.getVirtualItems().map((virtualRow, index) => {
+                const id = companiesIds[virtualRow.index];
+
+                const data = companiesById[id];
+
+                const isSelected = data.checked;
+                return (
+                  <tr
+                    key={id}
+                    style={{
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${
+                        virtualRow.start - index * virtualRow.size
+                      }px)`,
+                      ...(isSelected ? { backgroundColor: "lightgray" } : {}),
+                    }}
+                    className={cn(styles.trow, {
+                      trowSelected: isSelected,
+                    })}
+                  >
+                    <td>
+                      {
+                        <input
+                          type="checkbox"
+                          checked={data.checked}
+                          onChange={e =>
+                            dispatch(
+                              checkedCompany({
+                                id,
+                                newValue: e.target.checked,
+                              }),
+                            )
+                          }
+                        />
+                      }
+                    </td>
+                    <TData
+                      value={data.name}
+                      onChange={newValue =>
+                        handleChangeContent({ id, newValue, field: "name" })
+                      }
+                    />
+                    <TData
+                      value={data.address}
+                      onChange={newValue =>
+                        handleChangeContent({ id, newValue, field: "address" })
+                      }
+                    />
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

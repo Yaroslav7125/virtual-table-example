@@ -1,7 +1,5 @@
 import { useEffect } from "react";
 import "./App.css";
-import { Counter } from "./features/counter/Counter";
-import { Quotes } from "./features/quotes/Quotes";
 import logo from "./logo.svg";
 import { useAppDispatch, useAppSelector } from "./app/hooks";
 import { addCompanies } from "./features/companies/companiesSlice";

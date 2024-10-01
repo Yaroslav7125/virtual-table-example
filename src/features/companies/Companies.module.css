@@ -1,7 +1,5 @@
-table,
-th,
-td {
-  border: 1px solid black;
+.tableRoot {
+  width: 100%;
   border-collapse: collapse;
 }
 
@@ -11,19 +9,6 @@ td {
   overflow: auto;
 }
 
-
-.table {
-  height: 5000px;
+.theaderName {
+  width: 350px;
 }
-
-.checkboxCell {
-  width: 30px;
-}
-
-
-.theader {
-  /* position: sticky; */
-  /* top: 0; */
-  border: 1px solid black;
-}
-
